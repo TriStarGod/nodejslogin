@@ -1,0 +1,91 @@
+SPA - single page application
+http-only cookie can only be accessed by browser and NOT by javascript; data is usually stored in cookie to validate correct browser and hold session data
+------ Cross Site Forgery Request ------
+- App A (good) connects to Server A (good) in a valid form and Server A provides http-only cookie to App A;
+- App B (bad) connects to Server B (bad); App B sends a request to Server A to change unintended data; Server A changes data since Server A thinks request is coming from approved App A since correct header from cookie is transmitted
+Defense
+1. Store html unique based on webpage - this will force website to maintain session data and not as useful for SPA
+2. Server confirms origin header - not sure how this works
+3. App A receives 2 cookies; 1st cookie is html only cookie with session data; 2nd cookie can be read by javascript and sent with each request to server;
+4. Unique token data is sent to App A; App A then adds it whatever header (ie. authorization header) to confirm identity; main disadvantage is app must handle token itself (JWT token)
+
+Use HTTPS 100% and enable HSTS (strict transport security)
+
+Verify integrity an dvalidity of client-side session data and make sure to set and check expiration dates
+
+For cookies, configure cookies to use Secure and HttpOnly flag; make sure to have CSRF defense in place;
+
+------ Cross Site Scripting (XSS) ------
+Javascript function is inserted into client data which is submitted to server; If server accepts it, it can cause XSS; This will effect anyone else who uses that data;
+1. Stored XSS - unauthorized data is saved in server
+2. Reflected XSS -unauthorized data (aka a link) is saved on server; link is opened on authorized user; link loads malcious data that connects to server and using authorized user details, causes changes to server; Also can be activated on unsuspecting users by having the link activated automatically when users visit an infected webpage and the link activates via an iframe;
+3. DOM Based XSS - attack focuses on client; link activates causing website to do something however the malicious part is after # tag (which isn't run by server); the client then does the malicious activity using the data after the # tag;
+
+Defense
+Secure coding practices - use context-sensitive output encoding on untrusted data
+HTML body 				<h1>DATA</h1>
+HTML attributes 		<div id="DATA">
+Stylesheet context 		body{background-color: DATA}
+Script context 			alert("DATA");
+URL context 			<a href="http://example.com?arg=DATA">
+
+Use library that offers context-sensitive output encoding (ie OSPEN encoder, .NET sanitization)
+
+Make sure separate client and server functionality (ie. Server only serves data (RESTFUL) and does no processing while client takes care of everything else)
+
+When using non-text data provided by users, make sure to sanitize (i.e. ng-sanitize in angular would keep the image part but the remove javascript part of '"http://someimage.com/pic.png" alert(1);')
+
+Only TRUST data from sources that you know that is static and NOT provided by a user;
+
+------ Content Security Policy (CSP) ------
+Policies that you can specify what your app can have access to; Used to lock down app; Browser support is good; Chrome mandates for packaged apps;
+example of policy:
+Content-Security-Policy:
+	default-src 'self';
+	script-src 'self'
+		https://cdnjs.cloudflare.com/.../somescript.js;
+	style-src 'self'
+		https://cdnjs.cloudflare.com/.../bootstrap.min.css;
+
+^^By default, use things provided by current website; Also use specified cdnjs ... somescript.js script; Use specified cdnjs ... bootstrap.min.css style as specified in policy; Note that any other external webbased scripts or style sheets will not run;
+
+Content-Security-Policy:
+	default-src 'self';
+
+^^prevents all external data sources
+
+Content-Security-Policy:
+	default-src https: 'unsafe-inline' 'unsafe-eval';
+
+^^limits to https (not sure what unsafe... does)
+
+Content-Security-Policy-Report-Only:
+	default-src 'self';
+	report-uri http://some-shop.com/csp-report.cgi
+
+^^Use Report-Only mode to test CSP and see what errors (via the browser console) that occur with app; Even if you don't want CSP, use it to get insight into possible malicious client side attacks due to the reported errors;
+
+Uses:
+Frameworks like EmberJS that give detail warnings that should be PROPERLY fixed (search framework docs and not only use StackOverflow)
+
+Exceptions:
+You can lift certain restrictions but DONT USE it
+
+------ Cross-Origin Resource Sharing (CORS) ------
+Sharing resources from external websites; Due to attempting to access data from outside server, browser would give errors preventing user from doing so;
+
+Server-Side Proxies
+One original way to get around this issue is by requesting the outside data by using the server; The server would get the data and feed it back to the client (browser); However important info that is irrelevant to the server would be lost during this transfer like origin data; origin data is important to the browser to keep data separate;
+
+JSONP - JSON with padding
+Another method is to use a script tag with a link;
+<script src="http://somethirdpartysite.com/data?whatdata=unknown"></script>
+The link acts just like the cross site scripting would; This includes the disadvantage: since the script would have full authority within your website, if the scripts turns bad, you are screwed;
+
+Why not allow website to access any resource it wants without restriction?
+No webpage should be allowed to indiscriminately access any webpage it wants. This extremely dangerous!
+
+CORS allows the server to tell the browser that a resource can be accessed by a specific origin; CORS only applies to cookies and NOT tokens;
+
+CORS protects the user's cookies that only exists on the user's computer; For example, App A (good) accesses bank site; App B (bad) then also requests access from bank site;
+------  ------
