@@ -39,7 +39,7 @@ class LoginPage extends React.Component {
 		// //Test
 		// console.log("email:", this.state.user.email);
 		// console.log("password:", this.state.user.password);
-		//Test: email: df...@gmail.com password: test1234
+		//Test: email: df...@g...com password: test1234
 		const email=encodeURIComponent(this.state.user.email);
 		const password=encodeURIComponent(this.state.user.password);
 		const formData=`email=${email}&password=${password}`
